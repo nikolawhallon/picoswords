@@ -1,160 +1,173 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
-p1x = 64  p1y = 64
-p2x = 32  p2y = 32
-f = 0
-fpf = 10
-kifpf = 10
-kmfpf = 3
-kdir = 'right'
-kmov = false
-gfpf = 3
-i = 1
+-- usage:
+-- ```
+-- myanim=anim:new({
+--  sprs={19,21},
+--  fpi=3
+-- })
+-- ```
+-- sprs = sprite indices
+-- fpi = frames per index
+anim={
+ sprs={},
+ cur=0,
+ fpi=1,
 
-p1score = 0
-p2score = 0
-
-hearts = {}
-h1 = {44, 32}
-h2 = {60, 32}
-h3 = {76, 32}
-add(hearts, h1)
-add(hearts, h2)
-add(hearts, h3)
-
-music(0)
-
-player = {
- x=32,
- y=32,
- dir='right',
- mov=false,
-
- -- animations
- -- an animation is:
- -- * array of sprite indices
- -- * fpi (frames-per-index)
- -- * update function
- --   - f (frame) input
- -- if (f / fpi % n == 0) then
- -- where n=1..num indices
- -- set spr to i[n]
- -- e.g. heart could be:
- -- anm:new([1,2],10)
  new=function(self,tbl)
-  tlb=tbl or {}
+  tbl=tbl or {}
   setmetatable(tbl,{
    __index=self
   })
   return tbl
+ end,
+ 
+ update=function(self,f)
+  for n=1,#self.sprs do
+   if f / self.fpi % #self.sprs == n - 1 then
+    self.cur=self.sprs[n]
+   end
+  end
  end
 }
 
-players={}
-p1=player:new({x=16,y=16})
-add(players,p1)
+player={
+ x=16,
+ y=16,
+ -- move, idle must be present
+ -- override for p2, etc
+ anims={
+  move=anim:new({
+   sprs={19,21},
+   fpi=3
+  }),
+  idle=anim:new({
+   sprs={19,20},
+   fpi=10
+  })
+ },
+ dir='right',
+ mov=false,
+
+ new=function(self,tbl)
+  tbl=tbl or {}
+  setmetatable(tbl,{
+   __index=self
+  })
+  return tbl
+ end,
+
+ -- update state
+ -- l,r,u,d = controller input
+ update=function(self,f,l,r,u,d)
+  if l then
+   self.x-=1
+   self.dir='left'
+  end
+  if r then
+   self.x+=1
+   self.dir='right'
+  end
+  if u then self.y-=1 end
+  if d then self.y+=1 end
+
+  if l or r or u or d then
+   self.mov=true
+  else
+   self.mov=false
+  end
+
+  for k,v in pairs(self.anims) do
+   v:update(f)
+  end
+ end,
+
+ -- pick the animation
+ -- based on state
+ draw=function(self)
+  flp=false
+  if self.dir=='left' then
+   flp=true
+  end
+  
+  if self.mov then
+   cur=self.anims['move'].cur
+   spr(cur,self.x,self.y,1,1,flp)
+  else
+   cur=self.anims['idle'].cur
+   spr(cur,self.x,self.y,1,1,flp)
+  end
+ end
+}
+-->8
+music(0)
+
+p1=player:new({
+ x=16,
+ y=16,
+})
+
+p2=player:new({
+ x=96,
+ y=96,
+ anims={
+  move=anim:new({
+   sprs={25,27},
+   fpi=3
+  }),
+  idle=anim:new({
+   sprs={25,26},
+   fpi=10
+  })
+ }
+})
+
+skele=anim:new({
+ sprs={8,9,8,10},
+ fpi=3
+})
+
+gohos=anim:new({
+ sprs={5,6,7},
+ fpi=3
+})
+
+heart=anim:new({
+ sprs={1,2},
+ fpi=10
+})
+ 
+blofire=anim:new({
+ sprs={35,36},
+ fpi=10
+})
+
+f=0
 
 function _update()
-  if (btn(0, 0)) then p1x-=1 end
-  if (btn(1, 0)) then p1x+=1 end
-  if (btn(2, 0)) then p1y-=1 end
-  if (btn(3, 0)) then p1y+=1 end
+ p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0))
+ p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1))
 
-  if p1x > 128 then p1x -= 128 end
-  if p1x < -8 then p1x += 128 end
-
-  if p2x > 128 then p2x -= 128 end
-  if p2x < -8 then p2x += 128 end
-  
-  if p1y > 128 then p1y -= 128 end
-  if p1y < -8 then p1y += 128 end
-  
-  if p2y > 128 then p2y -= 128 end
-  if p2y < -8 then p2y += 128 end
-
-  if (btn(0, 1)) then p2x-=1 kdir = 'left' end
-  if (btn(1, 1)) then p2x+=1 kdir = 'right' end
-  if (btn(2, 1)) then p2y-=1 end
-  if (btn(3, 1)) then p2y+=1 end
-
-  if (btn(0, 1) or btn(1, 1) or btn(2, 1) or btn(3, 1)) then
-    kmov=true
-  else
-    kmov=false
-  end
+ skele:update(f)
+ gohos:update(f)
+ heart:update(f)
+ blofire:update(f)
 end
 
 function _draw()
-  cls(1)
-  
-  map(0, 0, 0, 0, 16, 16)
+ cls(1)
+ map(0,0,0,0,16,16)
 
-  print("p1:", 10, 9, 14)
-  print(tostr(p1score), 22, 9, 14)
-  print("p2:", 100, 9, 14)
-  print(tostr(p2score), 112, 9, 14)
+ p1:draw()
+ p2:draw()
 
-  if (f / fpf % 2 == 0) then
-    i = 1
-  elseif (f / fpf % 2 == 1) then
-    i = 2
-  end
-
-  for _, p in ipairs(hearts) do
-    if sqrt((p1x-p[1])*(p1x-p[1]) + (p1y-p[2])*(p1y-p[2])) < 8 then
-      del(hearts, p)
-      p1score += 1
-    elseif sqrt((p2x-p[1])*(p2x-p[1]) + (p2y-p[2])*(p2y-p[2])) < 8 then
-      del(hearts, p)
-      p2score += 1
-    end
-  end
-  
-  for _, p in ipairs(hearts) do
-    spr(i, p[1], p[2])
-  end
-  
-  kfpf=kifpf
-  if kmov then
-    kfpf=kmfpf
-  end
-  
-  if (f / kfpf % 2 == 0) then
-    k = 19
-  elseif (f / kfpf % 2 == 1) then
-    if kmov then
-      k = 21
-    else
-      k = 20
-    end
-  end
-
-  if kdir == 'right' then
-    spr(k, p2x, p2y, 1, 1)
-  else
-    spr(k, p2x, p2y, 1, 1, true)
-  end
-
-  if (f / gfpf % 3 == 0) then
-    j = 5
-  elseif (f / gfpf % 3 == 1) then
-    j = 6
-  elseif (f / gfpf % 3 == 2) then
-    j = 7
-  end
-
-  spr(j, p1x, p1y)
-
-  if kmov then
-    spr(28, 80, 80)
-  end
-  
-  for p in all(players) do
-    spr(28, p.x, p.y)
-  end
-  
-  f += 1
+ spr(skele.cur,64,64)
+ spr(gohos.cur,64,32)
+ spr(heart.cur,32,64)
+ spr(blofire.cur,96,32)
+ 
+ f+=1
 end
 __gfx__
 0000000007700ee00000000007760776222200000000000000000000000000000077770000777700007777000000000000000000000000000000000000000000
