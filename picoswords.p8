@@ -49,6 +49,8 @@ player={
  },
  dir='right',
  mov=false,
+ swd_dir='right',
+ swd_out=false,
 
  new=function(self,tbl)
   tbl=tbl or {}
@@ -59,18 +61,32 @@ player={
  end,
 
  -- update state
- -- l,r,u,d = controller input
- update=function(self,f,l,r,u,d)
+ -- l,r,u,d,a,b = controller input
+ update=function(self,f,l,r,u,d,a,b)
+  if not a and not b then
+   self.swd_out=false
+  else
+   self.swd_out=true
+  end
+  
   if l then
    self.x-=1
    self.dir='left'
+   self.swd_dir='left'
   end
   if r then
    self.x+=1
    self.dir='right'
+   self.swd_dir='right'
   end
-  if u then self.y-=1 end
-  if d then self.y+=1 end
+  if u then
+   self.y-=1
+   self.swd_dir='up'
+  end
+  if d then
+   self.y+=1
+   self.swd_dir='down'
+  end
 
   if l or r or u or d then
    self.mov=true
@@ -97,6 +113,18 @@ player={
   else
    cur=self.anims['idle'].cur
    spr(cur,self.x,self.y,1,1,flp)
+  end
+
+  if self.swd_out then
+   if self.swd_dir=='left' then
+    spr(28,self.x-8,self.y,1,1,true)
+   elseif self.swd_dir=='right' then
+    spr(28,self.x+8,self.y)
+   elseif self.swd_dir=='up' then
+    spr(29,self.x,self.y-8,1,1,false,true)
+   elseif self.swd_dir=='down' then
+    spr(29,self.x,self.y+8)
+   end
   end
  end
 }
@@ -146,8 +174,8 @@ blofire=anim:new({
 f=0
 
 function _update()
- p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0))
- p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1))
+ p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0),btn(4,0),btn(5,0))
+ p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1),btn(4,1),btn(5,1))
 
  skele:update(f)
  gohos:update(f)
