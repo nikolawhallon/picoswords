@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
+-- objects
+
 -- usage:
 -- ```
 -- myanim=anim:new({
@@ -70,21 +72,21 @@ player={
   end
   
   if l then
-   self.x-=1
+   if not self.swd_out then self.x-=1 end
    self.dir='left'
    self.swd_dir='left'
   end
   if r then
-   self.x+=1
+   if not self.swd_out then self.x+=1 end
    self.dir='right'
    self.swd_dir='right'
   end
   if u then
-   self.y-=1
+   if not self.swd_out then self.y-=1 end
    self.swd_dir='up'
   end
   if d then
-   self.y+=1
+   if not self.swd_out then self.y+=1 end
    self.swd_dir='down'
   end
 
@@ -128,8 +130,45 @@ player={
   end
  end
 }
+
+gosoh={
+ x=64,
+ y=64,
+ xvel=0.0,
+ yvel=0.0,
+ anims={
+  move=anim:new({
+   sprs={5,6,7},
+   fpi=3
+  })
+ },
+
+ new=function(self,tbl)
+  tbl=tbl or {}
+  setmetatable(tbl,{
+   __index=self
+  })
+  return tbl
+ end,
+
+ update=function(self,f)
+  self.x += self.xvel
+  self.y += self.yvel
+  for k,v in pairs(self.anims) do
+   v:update(f)
+  end
+ end,
+
+ draw=function(self)
+  cur=self.anims['move'].cur
+  spr(cur,self.x,self.y)
+ end
+}
+
 -->8
-music(0)
+-- game loop
+
+--music(0)
 
 p1=player:new({
  x=16,
@@ -156,10 +195,8 @@ skele=anim:new({
  fpi=3
 })
 
-gohos=anim:new({
- sprs={5,6,7},
- fpi=3
-})
+gosohs={}
+gosoh_timer=120
 
 heart=anim:new({
  sprs={1,2},
@@ -174,11 +211,35 @@ blofire=anim:new({
 f=0
 
 function _update()
+ -- spawn gosohs
+ if f % gosoh_timer==0 then
+  local a=rnd(1.0)
+  gosoh=gosoh:new({
+   x=64-4+(128 * cos(a)),
+   y=64-4+(128 * sin(a)),
+   xvel=-cos(a) * (rnd(1)+0.5),
+   yvel=-sin(a) * (rnd(1)+0.5)
+  })
+  add(gosohs,gosoh)
+ end
+ 
+ -- update objects
  p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0),btn(4,0),btn(5,0))
  p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1),btn(4,1),btn(5,1))
 
+ for gosoh in all(gosohs) do
+  gosoh:update(f)
+ end
+ 
+ -- despawn out-of-bounds gosohs
+ for gosoh in all(gosohs) do
+  if sqrt((gosoh.x-64) * (gosoh.x-64)+(gosoh.y-64) * (gosoh.y-64)) > 256 then
+   del(gosohs,gosoh)
+  end
+ end
+
+ -- test objects
  skele:update(f)
- gohos:update(f)
  heart:update(f)
  blofire:update(f)
 end
@@ -190,8 +251,11 @@ function _draw()
  p1:draw()
  p2:draw()
 
+ for gosoh in all(gosohs) do
+  gosoh:draw()
+ end
+
  spr(skele.cur,64,64)
- spr(gohos.cur,64,32)
  spr(heart.cur,32,64)
  spr(blofire.cur,96,32)
  
