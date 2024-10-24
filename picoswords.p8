@@ -51,6 +51,9 @@ player={
  },
  dir='right',
  mov=false,
+ -- consider making sword object
+ -- would have:
+ -- x,y,dir,active,draw
  swd_dir='right',
  swd_out=false,
 
@@ -165,6 +168,17 @@ gosoh={
  end
 }
 
+function intersects(x1,y1,w1,h1,x2,y2,w2,h2)
+ if x1+w1<=x2 or x2+w2<=x1 then
+  return false
+ end
+    
+ if y1+h1<=y2 or y2+h2<=y1 then
+  return false
+ end
+     
+ return true
+end
 -->8
 -- game loop
 
@@ -235,6 +249,27 @@ function _update()
  for gosoh in all(gosohs) do
   if sqrt((gosoh.x-64) * (gosoh.x-64)+(gosoh.y-64) * (gosoh.y-64)) > 256 then
    del(gosohs,gosoh)
+  end
+ end
+
+ -- gosoh sword collision
+ for gosoh in all(gosohs) do
+  if p1.swd_out then
+   local swdx = p1.x
+   local swdy = p1.y
+   if p1.swd_dir=='left' then
+    swdx-=8
+   elseif p1.swd_dir=='right' then
+    swdx+=8
+   elseif p1.swd_dir=='up' then
+    swdy-=8
+   elseif p1.swd_dir=='down' then
+    swdy+=8
+   end
+ 
+   if intersects(gosoh.x,gosoh.y,8,8,swdx,swdy,8,8) then
+    del(gosohs,gosoh)
+   end
   end
  end
 
