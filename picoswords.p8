@@ -297,23 +297,25 @@ function _update()
  end
 
  -- gosoh sword collision
- for gosoh in all(gosohs) do
-  if p1.swd_out then
-   local swdx = p1.x
-   local swdy = p1.y
-   if p1.swd_dir=='left' then
-    swdx-=8
-   elseif p1.swd_dir=='right' then
-    swdx+=8
-   elseif p1.swd_dir=='up' then
-    swdy-=8
-   elseif p1.swd_dir=='down' then
-    swdy+=8
-   end
+ for _,p in ipairs({p1,p2}) do
+  for gosoh in all(gosohs) do
+   if p.swd_out then
+    local swdx = p.x
+    local swdy = p.y
+    if p.swd_dir=='left' then
+     swdx-=8
+    elseif p.swd_dir=='right' then
+     swdx+=8
+    elseif p.swd_dir=='up' then
+     swdy-=8
+    elseif p.swd_dir=='down' then
+     swdy+=8
+    end
  
-   if intersects(gosoh.x,gosoh.y,8,8,swdx,swdy,8,8) then
-    del(gosohs,gosoh)
-    p1.score+=1
+    if intersects(gosoh.x,gosoh.y,8,8,swdx,swdy,8,8) then
+     del(gosohs,gosoh)
+     p.score+=1
+    end
    end
   end
  end
