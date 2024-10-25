@@ -51,6 +51,8 @@ player={
  },
  dir='right',
  mov=false,
+ score=0,
+ health=3,
  -- consider making sword object
  -- would have:
  -- x,y,dir,active,draw
@@ -311,6 +313,7 @@ function _update()
  
    if intersects(gosoh.x,gosoh.y,8,8,swdx,swdy,8,8) then
     del(gosohs,gosoh)
+    p1.score+=1
    end
   end
  end
@@ -338,6 +341,12 @@ function _draw()
  spr(blofire.cur,96,32)
  spr(glom.cur,32,96)
 
+ -- ui
+ print("p1:",10,9,14)
+ print(p1.score,22,9,14)
+ print("p2:",99,9,14)
+ print(p2.score,111,9,14)
+ 
  f+=1
 end
 __gfx__
