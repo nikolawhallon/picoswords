@@ -1,7 +1,19 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- objects
+-- functions and objects
+
+function is_close(x1,y1,x2,y2)
+ if x1-x2>2 then
+  return false
+ end
+ 
+ if y1-y2>2 then
+  return false
+ end 
+
+ return true
+end
 
 -- usage:
 -- ```
@@ -158,11 +170,14 @@ player={
  end
 }
 
-gosoh={
+enemy={
  x=64,
  y=64,
- xvel=0.0,
- yvel=0.0,
+ spd=1,
+ dst_x=64,
+ dst_y=64,
+ -- default animation is gosoh
+ -- override for other enemies
  anims={
   move=anim:new({
    sprs={5,6,7},
@@ -179,11 +194,19 @@ gosoh={
  end,
 
  update=function(self,f)
-  self.x += self.xvel
-  self.y += self.yvel
   for k,v in pairs(self.anims) do
    v:update(f)
   end
+
+  if is_close(self.x,self.y,self.dst_x,self.dst_y) then
+   return
+  end
+
+  local a=atan2(self.dst_x-self.x,self.dst_y-self.y)
+  local vel_x=self.spd * cos(a)
+  local vel_y=self.spd * sin(a)
+  self.x+=vel_x
+  self.y+=vel_y
  end,
 
  draw=function(self)
@@ -272,11 +295,11 @@ function _update()
  -- spawn gosohs
  if f % gosoh_timer==0 then
   local a=rnd(1.0)
-  gosoh=gosoh:new({
+  gosoh=enemy:new({
    x=64-4+(128 * cos(a)),
    y=64-4+(128 * sin(a)),
-   xvel=-cos(a) * (rnd(1)+0.5),
-   yvel=-sin(a) * (rnd(1)+0.5)
+   dst_x=64-4+(256 * cos(a+0.5)),
+   dst_y=64-4+(256 * sin(a+0.5))
   })
   add(gosohs,gosoh)
  end
@@ -291,7 +314,7 @@ function _update()
  
  -- despawn out-of-bounds gosohs
  for gosoh in all(gosohs) do
-  if sqrt((gosoh.x-64) * (gosoh.x-64)+(gosoh.y-64) * (gosoh.y-64)) > 256 then
+  if sqrt((gosoh.x-64) * (gosoh.x-64)+(gosoh.y-64) * (gosoh.y-64)) > 196 then
    del(gosohs,gosoh)
   end
  end
