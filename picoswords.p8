@@ -170,14 +170,15 @@ player={
  end
 }
 
+-- gohos by default
+-- override for other enemies
 enemy={
+ typ='gohos',
+ spd=1,
  x=64,
  y=64,
- spd=1,
  dst_x=64,
  dst_y=64,
- -- default animation is gosoh
- -- override for other enemies
  anims={
   move=anim:new({
    sprs={5,6,7},
@@ -202,7 +203,9 @@ enemy={
    return
   end
 
-  local a=atan2(self.dst_x-self.x,self.dst_y-self.y)
+  local dx=self.dst_x-self.x
+  local dy=self.dst_y-self.y
+  local a=atan2(dx,dy)
   local vel_x=self.spd * cos(a)
   local vel_y=self.spd * sin(a)
   self.x+=vel_x
@@ -211,7 +214,11 @@ enemy={
 
  draw=function(self)
   cur=self.anims['move'].cur
-  spr(cur,self.x,self.y)
+  if self.dst_x < self.x then
+   spr(cur,self.x,self.y,1,1,true)
+  else
+   spr(cur,self.x,self.y)
+  end
  end
 }
 
@@ -266,28 +273,11 @@ p2=player:new({
  }
 })
 
-skele=anim:new({
- sprs={8,9,8,10},
- fpi=3
-})
-
-gosohs={}
-gosoh_timer=120
-
-heart=anim:new({
- sprs={1,2},
- fpi=10
-})
- 
-blofire=anim:new({
- sprs={35,36},
- fpi=10
-})
-
-glom=anim:new({
- sprs={51,52,53},
- fpi=5
-})
+enemies={}
+gosoh_timer=100
+glom_timer=120
+blofire_timer=140
+skele_timer=160
 
 f=0
 
@@ -301,27 +291,53 @@ function _update()
    dst_x=64-4+(256 * cos(a+0.5)),
    dst_y=64-4+(256 * sin(a+0.5))
   })
-  add(gosohs,gosoh)
+  add(enemies,gosoh)
+ end
+
+ -- spawn gloms
+ if f % glom_timer==0 then
+  local p=rnd({{4,40},{4,80},{120,40},{120,80}})
+  glom=enemy:new({
+   typ='glom',
+   spd=0.5,
+   x=p[1],
+   y=p[2],
+   dst_x=p1.x,
+   dst_y=p1.y,
+   anims={
+    move=anim:new({
+     sprs={51,52,53},
+     fpi=5
+    })
+   }
+  })
+  add(enemies,glom)
  end
  
  -- update objects
  p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0),btn(4,0),btn(5,0))
  p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1),btn(4,1),btn(5,1))
 
- for gosoh in all(gosohs) do
-  gosoh:update(f)
+ for enemy in all(enemies) do
+  if enemy.typ=='glom' then
+   enemy.dst_x=p1.x
+   enemy.dst_y=p1.y
+  end
+  enemy:update(f)
  end
  
  -- despawn out-of-bounds gosohs
- for gosoh in all(gosohs) do
-  if sqrt((gosoh.x-64) * (gosoh.x-64)+(gosoh.y-64) * (gosoh.y-64)) > 196 then
-   del(gosohs,gosoh)
+ for enemy in all(enemies) do
+  if enemy.typ=='gohos' then
+   if enemy.x<-196 or enemy.x>324 or enemy.y<-196 or enemy.y>324 then
+    del(enemy, enemies)
+   end
   end
  end
 
- -- gosoh sword collision
+ -- enemy sword collision
  for _,p in ipairs({p1,p2}) do
-  for gosoh in all(gosohs) do
+  for enemy in all(enemies) do
    if p.swd_out then
     local swdx = p.x
     local swdy = p.y
@@ -335,19 +351,13 @@ function _update()
      swdy+=8
     end
  
-    if intersects(gosoh.x,gosoh.y,8,8,swdx,swdy,8,8) then
-     del(gosohs,gosoh)
+    if intersects(enemy.x,enemy.y,8,8,swdx,swdy,8,8) then
+     del(enemies,enemy)
      p.score+=1
     end
    end
   end
  end
-
- -- test objects
- skele:update(f)
- heart:update(f)
- blofire:update(f)
- glom:update(f)
 end
 
 function _draw()
@@ -357,14 +367,9 @@ function _draw()
  p1:draw()
  p2:draw()
 
- for gosoh in all(gosohs) do
-  gosoh:draw()
+ for enemy in all(enemies) do
+  enemy:draw()
  end
-
- spr(skele.cur,64,64)
- spr(heart.cur,32,64)
- spr(blofire.cur,96,32)
- spr(glom.cur,32,96)
 
  -- ui
  print("p1:",10,9,14)
