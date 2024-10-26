@@ -110,6 +110,10 @@ player={
  -- update state
  -- l,r,u,d,a,b = controller input
  update=function(self,f,l,r,u,d,a,b)
+  if self.health==0 then
+   return
+  end
+  
   if not a and not b then
    self.swd_out=false
   else
@@ -165,6 +169,10 @@ player={
  -- pick the animation
  -- based on state
  draw=function(self)
+  if self.health==0 then
+   return
+  end
+  
   flp=false
   if self.dir=='left' then
    flp=true
@@ -311,11 +319,21 @@ add(torches,t2)
 
 f=0
 
+function init()
+ enemies={}
+ p1.health=3
+ p2.health=3
+ p1.score=0
+ p2.score=0
+end
+
 function _update()
- if state=='start' then
+ if state=='start' or state=='end' then
   if btn(4,0) and btn(5,0) then
+   init()
    state='game'
   elseif btn(4,1) and btn(5,1) then
+   init()
    state='game'
   else
    return
@@ -398,8 +416,15 @@ function _update()
 
  for enemy in all(enemies) do
   if enemy.typ=='glom' or enemy.typ=='blofire' or enemy.typ=='skele' then
-   enemy.dst_x=p1.x
-   enemy.dst_y=p1.y
+   -- todo:
+   -- assign based on closest
+   if p1.health > 0 then
+    enemy.dst_x=p1.x
+    enemy.dst_y=p1.y
+   elseif p2.health > 0 then
+    enemy.dst_x=p2.x
+    enemy.dst_y=p2.y
+   end
   end
   enemy:update(f)
  end
@@ -415,6 +440,10 @@ function _update()
 
  -- enemy player collision
  for _,p in ipairs({p1,p2}) do
+  if p.health==0 then
+   goto continue
+  end
+  
   for e in all(enemies) do
    if intersects(e.x,e.y,8,8,p.x,p.y,8,8) then
     p.health-=1
@@ -432,9 +461,16 @@ function _update()
     e.pause+=60
    end
   end
+  
+  ::continue::
+ end
+
+ if p1.health==0 and p2.health==0 then
+  state='end'
+  return
  end
  
-  -- enemy sword collision
+ -- enemy sword collision
  for _,p in ipairs({p1,p2}) do
   for enemy in all(enemies) do
    if p.swd_out then
@@ -467,6 +503,9 @@ function _draw()
   print('pico swords',42,41,14)
   print('press a+b to start',28,82,14)
   return
+ elseif state=='end' then
+  print('game over',46,41,14)
+  print('press a+b to restart',24,82,14)
  end
  
  p1:draw()
