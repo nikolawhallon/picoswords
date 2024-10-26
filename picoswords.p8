@@ -264,14 +264,17 @@ enemy={
 
 --music(0)
 
+-- 'start','game','end'
+state='start'
+
 p1=player:new({
- x=16,
- y=16,
+ x=20,
+ y=20,
 })
 
 p2=player:new({
- x=96,
- y=96,
+ x=100,
+ y=100,
  anims={
   move=anim:new({
    sprs={25,27},
@@ -309,6 +312,16 @@ add(torches,t2)
 f=0
 
 function _update()
+ if state=='start' then
+  if btn(4,0) and btn(5,0) then
+   state='game'
+  elseif btn(4,1) and btn(5,1) then
+   state='game'
+  else
+   return
+  end
+ end
+
  -- spawn gosohs
  if f % gosoh_timer==0 then
   local a=rnd(1.0)
@@ -450,6 +463,12 @@ function _draw()
  cls(1)
  map(0,0,0,0,16,16)
 
+ if state=='start' then
+  print('pico swords',42,41,14)
+  print('press a+b to start',28,82,14)
+  return
+ end
+ 
  p1:draw()
  p2:draw()
 
@@ -462,9 +481,9 @@ function _draw()
  end
 
  -- ui
- print("p1:",10,9,14)
+ print('p1:',10,9,14)
  print(p1.score,22,9,14)
- print("p2:",99,9,14)
+ print('p2:',99,9,14)
  print(p2.score,111,9,14)
  
  f+=1
