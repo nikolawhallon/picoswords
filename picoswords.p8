@@ -15,6 +15,34 @@ function is_close(x1,y1,x2,y2)
  return true
 end
 
+
+function intersects(x1,y1,w1,h1,x2,y2,w2,h2)
+ if x1+w1<=x2 or x2+w2<=x1 then
+  return false
+ end
+    
+ if y1+h1<=y2 or y2+h2<=y1 then
+  return false
+ end
+     
+ return true
+end
+
+function intersects_tile(t,x1,y1,w1,h1)
+ local n=2
+ for i=0,n do
+  for j=0,n do
+   local x=x1+(w1*i)/n
+   local y=y1+(h1*j)/n
+   if mget(x/8,y/8)==t then
+    return true
+   end
+  end
+ end
+
+ return false
+end
+
 -- usage:
 -- ```
 -- myanim=anim:new({
@@ -199,17 +227,22 @@ enemy={
    v:update(f)
   end
 
-  if is_close(self.x,self.y,self.dst_x,self.dst_y) then
-   return
-  end
+  --if is_close(self.x,self.y,self.dst_x,self.dst_y) then
+  -- return
+  --end
 
   local dx=self.dst_x-self.x
   local dy=self.dst_y-self.y
   local a=atan2(dx,dy)
   local vel_x=self.spd * cos(a)
   local vel_y=self.spd * sin(a)
-  self.x+=vel_x
-  self.y+=vel_y
+
+  if self.typ=='gohos' or not intersects_tile(3,self.x+1+vel_x,self.y+1,6,6) then
+   self.x+=vel_x
+  end
+  if self.typ=='gohos' or not intersects_tile(3,self.x+1,self.y+1+vel_y,6,6) then
+   self.y+=vel_y
+  end
  end,
 
  draw=function(self)
@@ -222,32 +255,6 @@ enemy={
  end
 }
 
-function intersects(x1,y1,w1,h1,x2,y2,w2,h2)
- if x1+w1<=x2 or x2+w2<=x1 then
-  return false
- end
-    
- if y1+h1<=y2 or y2+h2<=y1 then
-  return false
- end
-     
- return true
-end
-
-function intersects_tile(t,x1,y1,w1,h1)
- local n=2
- for i=0,n do
-  for j=0,n do
-   local x=x1+(w1*i)/n
-   local y=y1+(h1*j)/n
-   if mget(x/8,y/8)==t then
-    return true
-   end
-  end
- end
-
- return false
-end
 -->8
 -- game loop
 
