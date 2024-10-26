@@ -302,8 +302,6 @@ function _update()
    spd=0.5,
    x=p[1],
    y=p[2],
-   dst_x=p1.x,
-   dst_y=p1.y,
    anims={
     move=anim:new({
      sprs={51,52,53},
@@ -313,13 +311,49 @@ function _update()
   })
   add(enemies,glom)
  end
+
+ -- spawn blofires
+ if f % blofire_timer==0 then
+  local p=rnd({{60,0},{60,120}})
+  blofire=enemy:new({
+   typ='blofire',
+   spd=0.25,
+   x=p[1],
+   y=p[2],
+   anims={
+    move=anim:new({
+     sprs={35,36},
+     fpi=10
+    })
+   }
+  })
+  add(enemies,blofire)
+ end
+
+ -- spawn skeles
+ if f % skele_timer==0 then
+  local p=rnd({{60,0},{60,120}})
+  skele=enemy:new({
+   typ='skele',
+   spd=0.75,
+   x=p[1],
+   y=p[2],
+   anims={
+    move=anim:new({
+     sprs={8,9,10},
+     fpi=3
+    })
+   }
+  })
+  add(enemies,skele)
+ end
  
  -- update objects
  p1:update(f,btn(0,0),btn(1,0),btn(2,0),btn(3,0),btn(4,0),btn(5,0))
  p2:update(f,btn(0,1),btn(1,1),btn(2,1),btn(3,1),btn(4,1),btn(5,1))
 
  for enemy in all(enemies) do
-  if enemy.typ=='glom' then
+  if enemy.typ=='glom' or enemy.typ=='blofire' or enemy.typ=='skele' then
    enemy.dst_x=p1.x
    enemy.dst_y=p1.y
   end
