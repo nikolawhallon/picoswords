@@ -191,10 +191,9 @@ player={
   end
 
   -- ui health bar
-  rectfill(self.x,self.y-3,self.x+1,self.y-2,11)
-  rectfill(self.x+3,self.y-3,self.x+4,self.y-2,11)
-  rectfill(self.x+6,self.y-3,self.x+7,self.y-2,11)
- 
+  for h=0,self.health-1 do
+   rectfill(self.x+3 * h,self.y-3,self.x+1+3 * h,self.y-2,11)
+  end
  end
 }
 
@@ -203,6 +202,7 @@ player={
 enemy={
  typ='gohos',
  spd=1,
+ pause=0,
  x=64,
  y=64,
  dst_x=64,
@@ -227,6 +227,10 @@ enemy={
    v:update(f)
   end
 
+  if self.pause > 0 then
+   self.pause-=1
+   return
+  end
   --if is_close(self.x,self.y,self.dst_x,self.dst_y) then
   -- return
   --end
@@ -376,7 +380,28 @@ function _update()
   end
  end
 
- -- enemy sword collision
+ -- enemy player collision
+ for _,p in ipairs({p1,p2}) do
+  for e in all(enemies) do
+   if intersects(e.x,e.y,8,8,p.x,p.y,8,8) then
+    p.health-=1
+    local dx=p.x-e.x
+    local dy=p.y-e.y
+    local a=atan2(dx,dy)
+    if not intersects_tile(3,p.x+6 * cos(a),p.y,8,8) then
+     p.x+=6 * cos(a)
+    end
+    if not intersects_tile(3,p.x,p.y+6 * sin(a),8,8) then
+     p.y+=6 * sin(a)
+    end
+    e.x+=6 * cos(a+0.5)
+    e.y+=6 * sin(a+0.5)
+    e.pause+=60
+   end
+  end
+ end
+ 
+  -- enemy sword collision
  for _,p in ipairs({p1,p2}) do
   for enemy in all(enemies) do
    if p.swd_out then
