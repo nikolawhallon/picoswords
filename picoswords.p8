@@ -3,6 +3,18 @@ version 42
 __lua__
 -- functions and objects
 
+function closer(t,a,b)
+ local adx=abs(t.x-a.x)
+ local bdx=abs(t.x-b.x)
+ local ady=abs(t.y-a.y)
+ local bdy=abs(t.y-b.y)
+ if adx+ady < bdx+bdy then
+  return a
+ else
+  return b
+ end
+end
+
 function is_close(x1,y1,x2,y2)
  if x1-x2>2 then
   return false
@@ -416,12 +428,14 @@ function _update()
 
  for enemy in all(enemies) do
   if enemy.typ=='glom' or enemy.typ=='blofire' or enemy.typ=='skele' then
-   -- todo:
-   -- assign based on closest
-   if p1.health > 0 then
+   if p1.health > 0 and p2.health > 0 then
+    local p=closer(enemy,p1,p2)
+    enemy.dst_x=p.x
+    enemy.dst_y=p.y
+   elseif p1.health > 0 then
     enemy.dst_x=p1.x
     enemy.dst_y=p1.y
-   elseif p2.health > 0 then
+   else
     enemy.dst_x=p2.x
     enemy.dst_y=p2.y
    end
