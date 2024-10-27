@@ -315,9 +315,9 @@ p2=player:new({
 
 enemies={}
 gosoh_timer=100
-glom_timer=120
-blofire_timer=140
-skele_timer=160
+glom_timer=60000--120
+blofire_timer=60000--140
+skele_timer=60000--160
 
 torches={}
 t1=anim:new({
@@ -335,7 +335,9 @@ t2=anim:new({
 })
 add(torches,t2)
 
-f=0
+-- start at 1 so enemies
+-- don't spawn immediately
+f=1
 
 function init()
  enemies={}
@@ -343,6 +345,10 @@ function init()
  p2.health=3
  p1.score=0
  p2.score=0
+ gosoh_timer=100
+ glom_timer=60000--120
+ blofire_timer=60000--140
+ skele_timer=60000--16
 end
 
 function _update()
@@ -515,6 +521,24 @@ function _update()
    end
   end
  end
+ 
+ -- adjust spawn rates
+ local s=p1.score+p2.score
+ if s >= 8 then
+  glom_timer=120
+ end
+ if s >= 16 then
+  blofire_timer=140
+ end
+ if s >= 24 then
+  skele_timer=160
+ end
+ if s >= 32 then
+  gosoh_timer=max(100-s,0)
+  glom_timer=max(120-s,0)
+  blofire_timer=max(140-s,0)
+  skele_timer=max(160-s,0)
+ end
 end
 
 function _draw()
@@ -525,9 +549,6 @@ function _draw()
   print('pico swords',42,41,14)
   print('press a+b to start',28,82,14)
   return
- elseif state=='end' then
-  print('game over',46,41,14)
-  print('press a+b to restart',24,82,14)
  end
  
  p1:draw()
@@ -546,6 +567,11 @@ function _draw()
  print(p1.score,22,9,14)
  print('p2:',99,9,14)
  print(p2.score,111,9,14)
+
+ if state=='end' then
+  print('game over',46,41,14)
+  print('press a+b to restart',24,82,14)
+ end
  
  f+=1
 end
