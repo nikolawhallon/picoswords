@@ -122,7 +122,7 @@ player={
  -- update state
  -- l,r,u,d,a,b = controller input
  update=function(self,f,l,r,u,d,a,b)
-  if self.health==0 then
+  if self.health<=0 then
    return
   end
   
@@ -187,7 +187,7 @@ player={
  -- pick the animation
  -- based on state
  draw=function(self)
-  if self.health==0 then
+  if self.health<=0 then
    return
   end
   
@@ -466,7 +466,7 @@ function _update()
 
  -- enemy player collision
  for _,p in ipairs({p1,p2}) do
-  if p.health==0 then
+  if p.health<=0 then
    goto continue
   end
   
@@ -492,7 +492,7 @@ function _update()
   ::continue::
  end
 
- if p1.health==0 and p2.health==0 then
+ if p1.health<=0 and p2.health<=0 then
   state='end'
   return
  end
